@@ -25,6 +25,16 @@ assert(len(X_valid) == len(y_valid))
 assert(len(X_test) == len(y_test))
 
 
+#%% Step 1-0 - Read signnames.csv
+import csv
+signnames = None
+with open('../signnames.csv') as csvFile:
+    reader = csv.reader(csvFile)
+    # Skip header
+    next(reader)
+    signnames = [r[1] for r in reader]
+
+
 ### Step 2 - Design and Test a Model Architecture
 
 #%% Step 2-1 - Preprocess
@@ -114,6 +124,9 @@ keep_prob = tf.placeholder(tf.float32)
 # Build neural networks for:
 # modeling
 logits = build_nn(x, keep_prob)
+softmax_op = tf.nn.softmax(logits=logits)
+pred_count = 5
+top5_op = tf.nn.top_k(softmax_op, k=pred_count)
 # evaluations
 correct_predictions = tf.equal(tf.argmax(logits, 1), tf.argmax(y_onehot, 1))
 accuracy_op = tf.reduce_mean(tf.cast(correct_predictions, tf.float32))
@@ -126,7 +139,7 @@ import time
 from sklearn.utils import shuffle
 
 # Set hyper-parameters
-EPOCHS = 30
+EPOCHS = 15
 BATCH_SIZE = 128
 KEEP_PROB = 0.4
 
@@ -137,20 +150,127 @@ def evaluate(X_data, y_data):
     for offset in range(0, num_examples, BATCH_SIZE):
         index_end = offset + BATCH_SIZE
         batch_x, batch_y = X_data[offset:index_end], y_data[offset:index_end]
-        accuracy = sess.run(accuracy_op, feed_dict={x: batch_x, y: batch_y, keep_prob: 1.0})
+        accuracy, top5_pred = sess.run([accuracy_op, top5_op], \
+                feed_dict={x: batch_x, y: batch_y, keep_prob: 1.0})
         total_accuracy += (accuracy * len(batch_x))
-    return total_accuracy / num_examples
+    return (total_accuracy / num_examples, top5_pred)
 
 # Train the neural networks
+# saver = tf.train.Saver()
+# with tf.Session() as sess:
+#     saver.restore(sess, './train_data/trafficsign_train_002')
+#
+#     # Validate the networks against validation set
+#     validation_accuracy = evaluate(X_valid_proc, y_valid)
+#     print('Validation Accuracy = {:.6f}'.format(validation_accuracy))
+
+
+### Step 3: Test a Model on New Images ###
+
+#%% Read new traffic sign images and resize them
+import os
+import matplotlib.pyplot as plt
+
+new_img_dir = '../image/'
+image_files = sorted(os.listdir(new_img_dir))
+new_img_count = len(image_files)
+new_images = []
+X_new, y_new = [], []
+for image_name in image_files:
+    # Read an image file
+    img = cv2.imread(new_img_dir + image_name)
+    img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    new_images.append(img_rgb)
+    # Resize the image file
+    img_resized = cv2.resize(img_rgb, dsize=(32, 32), interpolation=cv2.INTER_LINEAR)
+    X_new.append(img_resized)
+    # Determine the traffic sign class
+    img_class = int(image_name.split('.')[0])
+    y_new.append(img_class)
+# Preprocess images
+y_new = np.array(y_new)
+X_new_proc = preprocess(X_new)
+
+# Display new images
+img_row = 3
+img_col = 3
+plt.figure(figsize=(10, 10))
+for i in range(new_img_count):
+    plt.subplot(img_row, img_col, i + 1)
+    img_label = y_new[i]
+    plt.title('{} - {:.15}'.format(image_files[i], signnames[img_label]))
+    plt.imshow(new_images[i])
+plt.show()
+
+plt.figure().suptitle('New Traffic Sign Images - Resized to 32x32')
+for i in range(new_img_count):
+    plt.subplot(img_row, img_col, i + 1)
+    img_label = y_new[i]
+    plt.title('{} - {}'.format(img_label, signnames[img_label]))
+    plt.imshow(X_new[i])
+plt.show()
+
+plt.figure().suptitle('New Traffic Sign Images - Preprocessed')
+for i in range(new_img_count):
+    plt.subplot(img_row, img_col, i + 1)
+    img_label = y_new[i]
+    plt.title('{} - {}'.format(img_label, signnames[img_label]))
+    plt.imshow(X_new_proc[i].squeeze(), cmap='gray')
+plt.show()
+
+
+#%% Evaluate new images
+train_data_file = './train_data/trafficsign_train_001'
 saver = tf.train.Saver()
 with tf.Session() as sess:
-    saver.restore(sess, './train_data/trafficsign_train_002')
+    saver.restore(sess, train_data_file)
 
     # Validate the networks against validation set
-    validation_accuracy = evaluate(X_valid_proc, y_valid)
-    print('Validation Accuracy = {:.6f}'.format(validation_accuracy))
+    new_img_accuracy, top5_pred = evaluate(X_new_proc, y_new)
+
+print('New Image Accuracy = {:.1%}'.format(new_img_accuracy))
 
 
+#%% Display predictions for new images
+plt.figure(figsize=(10, 10))
+
+for i in range(new_img_count):
+    plt.subplot(img_row, img_col, i + 1)
+    img_label = y_new[i]
+    label_pred = top5_pred.indices[i][0]
+    correct = 'CORRECT' if label_pred == img_label else 'WRONG'
+    plt.title('{} - {:.20}\nPrediction: {} ({:.1%}) {}'.format( \
+            image_files[i], signnames[img_label], label_pred, top5_pred.values[i][0], correct))
+    plt.imshow(X_new_proc[i].squeeze(), cmap='gray')
+plt.tight_layout()
+plt.show()
 
 
+#%% Print prediction summary - top 5 softmax probabilities
 
+for i in range(new_img_count):
+    img_label = y_new[i]
+    signname = signnames[img_label]
+    predictions = list(map(lambda x: '{}-{:.20} ({:.1%})'.format(x[0], signnames[x[0]], x[1]), \
+        list(zip(top5_pred.indices[i], top5_pred.values[i]))))
+    # print([i for i in predictions])
+    print(predictions)
+
+
+#%% Display prediction summary - top 5 softmax probabilities
+import pandas as pd
+
+labels_new = np.array([[i] * pred_count for i in y_new]).flatten()
+predictions_new = top5_pred.indices.flatten()
+index_tuple = list(zip(
+    np.array([[i] * pred_count for i in image_files]).flatten(),
+    ['{:.10}'.format(signnames[i]) for i in labels_new],
+    list(range(1, pred_count + 1)) * new_img_count))
+pd_index = pd.MultiIndex.from_tuples(index_tuple, names=['FileName', 'Label', 'Rank'])
+df = pd.DataFrame({
+        'Prediction': ['{:.10} ({})'.format(signnames[i], i) for i in predictions_new],
+        'Confidence': ['{:.1%}'.format(i) for i in top5_pred.values.flatten()],
+        'Correct': np.equal(labels_new, predictions_new)
+    },
+    index=pd_index)
+print(df[['Prediction', 'Confidence', 'Correct']])

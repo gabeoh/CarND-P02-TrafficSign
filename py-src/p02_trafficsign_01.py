@@ -54,18 +54,44 @@ print("Image data shape =", image_shape)
 print("Number of classes =", n_classes)
 
 
+#%% Step 1-0 - Read signnames.csv
+import csv
+signnames = None
+with open('../signnames.csv') as csvFile:
+    reader = csv.reader(csvFile)
+    # Skip header
+    next(reader)
+    signnames = [r[1] for r in reader]
+
 #%% Step 1-1 - Visualize the Data
 print('#%% Step 1-1 - Visualize the Data ###')
 
 ### Data exploration visualization code goes here.
-### Feel free to use as many code cells as needed.
 import matplotlib.pyplot as plt
+import random
+
+def get_img_indexes_for(count_train, display_count, label=None):
+    if label == None:
+        return np.random.randint(0, count_train, display_count)
+    else:
+        indexes = [i for i, j in enumerate(y_train) if j == label]
+        random.shuffle(indexes)
+        return indexes
 
 # Show a random image from training image set
+img_row = 3
+img_col = 3
+display_count = img_row * img_col
 count_train = X_train.shape[0]
-img_index = np.random.randint(0, count_train)
-print('Display image #{} from {} train images'.format(img_index + 1, count_train))
-plt.imshow(X_train[img_index])
+img_indexes = get_img_indexes_for(count_train, display_count)
+plt.figure(figsize=(10, 10))
+for i in range(display_count):
+    plt.subplot(img_row, img_col, i + 1)
+    img_index = img_indexes[i]
+    img_label = y_train[img_index]
+    plt.title('#{} - {}:{:.15}'.format(img_index, img_label, signnames[img_label]))
+    plt.imshow(X_train[img_index])
+
 plt.show()
 
 
@@ -94,9 +120,14 @@ X_valid_proc = preprocess(X_valid)
 X_test_proc = preprocess(X_test)
 
 # Display processed image
-plt.imshow(X_train_proc[img_index].squeeze(), cmap='gray')
+plt.figure(figsize=(10, 10))
+for i in range(display_count):
+    plt.subplot(img_row, img_col, i + 1)
+    img_index = img_indexes[i]
+    img_label = y_train[img_index]
+    plt.title('#{} - {}:{:.15}'.format(img_index, img_label, signnames[img_label]))
+    plt.imshow(X_train_proc[img_index].squeeze(), cmap='gray')
 plt.show()
-
 
 
 #%% Step 2-2 - Model Architecture
@@ -163,6 +194,9 @@ keep_prob = tf.placeholder(tf.float32)
 # Build neural networks for:
 # modeling
 logits = build_nn(x, keep_prob)
+softmax_op = tf.nn.softmax(logits=logits)
+pred_count = 5
+top5_op = tf.nn.top_k(softmax_op, k=pred_count)
 # training
 learn_rate = 0.001
 cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(labels=y_onehot, logits=logits)
@@ -190,7 +224,7 @@ import time
 from sklearn.utils import shuffle
 
 # Set hyper-parameters
-EPOCHS = 30
+EPOCHS = 2
 BATCH_SIZE = 128
 KEEP_PROB = 0.4
 
@@ -209,12 +243,13 @@ def evaluate(X_data, y_data):
     for offset in range(0, num_examples, BATCH_SIZE):
         index_end = offset + BATCH_SIZE
         batch_x, batch_y = X_data[offset:index_end], y_data[offset:index_end]
-        accuracy = sess.run(accuracy_op, feed_dict={x: batch_x, y: batch_y, keep_prob: 1.0})
+        accuracy, top5_pred = sess.run([accuracy_op, top5_op], \
+                feed_dict={x: batch_x, y: batch_y, keep_prob: 1.0})
         total_accuracy += (accuracy * len(batch_x))
-    return total_accuracy / num_examples
+    return (total_accuracy / num_examples, top5_pred)
 
 # Train the neural networks
-train_data_file = './train_data/trafficsign_train_001'
+train_data_file = './train_data/trafficsign_train_003'
 saver = tf.train.Saver()
 with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
@@ -227,17 +262,17 @@ with tf.Session() as sess:
         train(X_train_proc, y_train)
 
         # Train the neural networks
-        train_accuracy = evaluate(X_train_proc, y_train)
+        train_accuracy, _ = evaluate(X_train_proc, y_train)
 
         # Validate the networks against validation set
-        validation_accuracy = evaluate(X_valid_proc, y_valid)
+        validation_accuracy, _ = evaluate(X_valid_proc, y_valid)
 
         print('EPOCH {:<2} - Train Accuracy = {:.3f}, Validation Accuracy = {:.3f}'.format(
             i + 1, train_accuracy, validation_accuracy))
         # print('{}\t{}\t{}'.format(i+1, train_accuracy, validation_accuracy))
 
     end_time = time.perf_counter()
-    print('Completed the neural network training in {}s (at {})'.format(end_time - start_time, end_time))
+    print('Completed the neural network training in {:.3f}s (at {})'.format(end_time - start_time, end_time))
     saver.save(sess, train_data_file)
 
 
@@ -246,7 +281,7 @@ with tf.Session() as sess:
     saver.restore(sess, train_data_file)
 
     # Validate the networks against test set
-    test_accuracy = evaluate(X_test_proc, y_test)
+    test_accuracy, _ = evaluate(X_test_proc, y_test)
     print('Test Accuracy = {:.3f}'.format(test_accuracy))
 
 
