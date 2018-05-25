@@ -37,7 +37,7 @@ import numpy as np
 n_train = X_train.shape[0]
 
 # Number of validation examples
-n_validation = X_valid.shape[0]
+n_valid = X_valid.shape[0]
 
 # Number of testing examples.
 n_test = X_test.shape[0]
@@ -49,12 +49,46 @@ image_shape = X_train.shape[1:3]
 n_classes = np.unique(np.append(np.append(y_train, y_valid), y_test)).shape[0]
 
 print("Number of training examples =", n_train)
+print("Number of validation examples =", n_valid)
 print("Number of testing examples =", n_test)
 print("Image data shape =", image_shape)
 print("Number of classes =", n_classes)
 
+#%% Step 1-0a - Visualize dataset summary
+import pandas as pd
+import matplotlib.pyplot as plt
 
-#%% Step 1-0 - Read signnames.csv
+df_data_count = pd.DataFrame({
+        'ImageCount': [n_train, n_valid, n_test]
+    }, index=['Train', 'Validation', 'Test'])
+print(df_data_count)
+
+plt.figure()
+df_data_count.plot.bar()
+plt.title('Image Count for Each Dataset Type')
+plt.xticks(rotation='horizontal')
+#### plt.savefig('../results/count_by_dataset.png')
+plt.show()
+
+bc_train = np.bincount(y_train)
+bc_valid = np.bincount(y_valid)
+bc_test = np.bincount(y_test)
+assert(len(bc_train) == len(bc_valid))
+assert(len(bc_valid) == len(bc_test))
+y_bins = range(len(bc_train))
+df_data_labels = pd.DataFrame({
+        'Train': bc_train,
+        'Validation': bc_valid,
+        'Test': bc_test
+    }, index=y_bins, columns=['Train', 'Validation', 'Test'])
+plt.figure()
+df_data_labels.plot.bar(stacked=True)
+plt.title('Occurence of Each Traffic Sign Class')
+plt.xticks(rotation='vertical')
+#### plt.savefig('../results/count_by_traffic_sign.png')
+plt.show()
+
+#%% Step 1-0b - Read signnames.csv
 import csv
 signnames = None
 with open('../signnames.csv') as csvFile:
