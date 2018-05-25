@@ -1,58 +1,71 @@
-## Project: Build a Traffic Sign Recognition Program
-[![Udacity - Self-Driving Car NanoDegree](https://s3.amazonaws.com/udacity-sdc/github/shield-carnd.svg)](http://www.udacity.com/drive)
+# CarND-P02-TrafficSign
+CarND-P02-TrafficSign implements a neural network model to recognize German
+traffic signs.  It trains, validates, and tests the neural network model
+using dataset provided in the
+[German Traffic Sign Dataset](http://benchmark.ini.rub.de/?section=gtsrb&subsection=dataset).
 
-Overview
----
-In this project, you will use what you've learned about deep neural networks and convolutional neural networks to classify traffic signs. You will train and validate a model so it can classify traffic sign images using the [German Traffic Sign Dataset](http://benchmark.ini.rub.de/?section=gtsrb&subsection=dataset). After the model is trained, you will then try out your model on images of German traffic signs that you find on the web.
+Once the model is trained, validated, and tested, it is tested against a new
+set of German traffic sign images found on web.  It further performs error
+analyses and data visualizations in order to get better insights into the
+neural network behaviors.
 
-We have included an Ipython notebook that contains further instructions 
-and starter code. Be sure to download the [Ipython notebook](https://github.com/udacity/CarND-Traffic-Sign-Classifier-Project/blob/master/Traffic_Sign_Classifier.ipynb). 
 
-We also want you to create a detailed writeup of the project. Check out the [writeup template](https://github.com/udacity/CarND-Traffic-Sign-Classifier-Project/blob/master/writeup_template.md) for this project and use it as a starting point for creating your own writeup. The writeup can be either a markdown file or a pdf document.
+## File Structure
+### Project Requirements
+- **[Traffic_Sign_Classifier.ipynb](Traffic_Sign_Classifier.ipynb)** - Project IPython notebook
+- **??** - HTML output of the Ipython notebook
+- **[P02_writeup.md](P02_writeup.md)** - Project write-up report
 
-To meet specifications, the project will require submitting three files: 
-* the Ipython notebook with the code
-* the code exported as an html file
-* a writeup report either as a markdown or pdf file 
+### Additional Files
+- **py-src** - Directory containing raw python scripts used in the project
+- **image** - Additional traffic sign images found on the web
+- **results** - Project outputs such as plots and processed images 
+- **[signnames.csv](signnames.csv)** - CSV file containing mappings from
+  classId to the sign name
 
-Creating a Great Writeup
----
-A great writeup should include the [rubric points](https://review.udacity.com/#!/rubrics/481/view) as well as your description of how you addressed each point.  You should include a detailed description of the code used in each step (with line-number references and code snippets where necessary), and links to other supporting documents or external references.  You should include images in your writeup to demonstrate how your code works with examples.  
+### Not Included
+- **data** - Download and extract [Udacity Traffic Signs Data](https://s3-us-west-1.amazonaws.com/udacity-selfdrivingcar/traffic-signs-data.zip)
+  to this directory
 
-All that said, please be concise!  We're not looking for you to write a book here, just a brief description of how you passed each rubric point, and references to the relevant code :). 
 
-You're not required to use markdown for your writeup.  If you use another method please just submit a pdf of your writeup.
+## Getting Started
+### [Download ZIP](https://github.com/gabeoh/CarND-P02-TrafficSign/archive/master.zip) or Git Clone
+```
+git clone https://github.com/gabeoh/CarND-P02-TrafficSign.git
+```
 
-The Project
----
-The goals / steps of this project are the following:
-* Load the data set
-* Explore, summarize and visualize the data set
-* Design, train and test a model architecture
-* Use the model to make predictions on new images
-* Analyze the softmax probabilities of the new images
-* Summarize the results with a written report
+### Setup environment
 
-### Dependencies
-This lab requires:
+You can set up the environment following
+[CarND-Term1-Starter-Kit - Miniconda](https://github.com/udacity/CarND-Term1-Starter-Kit/blob/master/doc/configure_via_anaconda.md).
+This will install following packages required to run this application.
 
-* [CarND Term1 Starter Kit](https://github.com/udacity/CarND-Term1-Starter-Kit)
+- Miniconda
+- Python
+- Jupyter Notebook
 
-The lab environment can be created with CarND Term1 Starter Kit. Click [here](https://github.com/udacity/CarND-Term1-Starter-Kit/blob/master/README.md) for the details.
+### Usage
 
-### Dataset and Repository
+There are two ways of running this project.
 
-1. Download the data set. The classroom has a link to the data set in the "Project Instructions" content. This is a pickled dataset in which we've already resized the images to 32x32. It contains a training, validation and test set.
-2. Clone the project, which contains the Ipython notebook and the writeup template.
-```sh
-git clone https://github.com/udacity/CarND-Traffic-Sign-Classifier-Project
-cd CarND-Traffic-Sign-Classifier-Project
+#### Jupyter Notebook
+Open `Traffic_Sign_Classifier.ipynb`, the project IPython notebook, using Jupyter Notebook.
+```
 jupyter notebook Traffic_Sign_Classifier.ipynb
 ```
 
-### Requirements for Submission
-Follow the instructions in the `Traffic_Sign_Classifier.ipynb` notebook and write the project report using the writeup template as a guide, `writeup_template.md`. Submit the project code and writeup document.
+#### Running Python Scripts
+You can also run Python scripts directly from command line.
+```
+$ cd py-src
 
-## How to write a README
-A well written README file can enhance your project and portfolio.  Develop your abilities to create professional README files by completing [this free course](https://www.udacity.com/course/writing-readmes--ud777).
+# Train, validate, and test the neural network model on the provided dataset
+$ python p02_trafficsign_01.py
+
+# Run a prediction on new dataset. Analyze the prediction processes. 
+$ python p02_trafficsign_02.py
+```
+
+## License
+Licensed under [MIT](LICENSE) License.
 
