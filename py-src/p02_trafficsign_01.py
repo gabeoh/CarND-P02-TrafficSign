@@ -61,7 +61,6 @@ import matplotlib.pyplot as plt
 df_data_count = pd.DataFrame({
         'ImageCount': [n_train, n_valid, n_test]
     }, index=['Train', 'Validation', 'Test'])
-print(df_data_count)
 
 plt.figure()
 df_data_count.plot.bar()
@@ -217,11 +216,13 @@ def build_nn(x, keep_prob):
     # Layer 1 - Conv:(32, 32, 1)=>(28, 28, 12) -- ReLU -- MaxPool:=>(14, 14, 12)
     l1 = tf.nn.conv2d(x, weights['w1'], conv_stride, padding) + biases['b1']
     l1 = tf.nn.relu(l1)
+    conv1 = l1
     l1 = tf.nn.max_pool(l1, pool_kernel, pool_stride, padding)
 
     # Layer 2 - Conv:(14, 14, 12)=>(10, 10, 32) -- ReLU -- MaxPool:=>(5, 5, 32) -- Flat:=>(800)
     l2 = tf.nn.conv2d(l1, weights['w2'], conv_stride, padding) + biases['b2']
     l2 = tf.nn.relu(l2)
+    conv2 = l2
     l2 = tf.nn.max_pool(l2, pool_kernel, pool_stride, padding)
     l2 = tf.contrib.layers.flatten(l2)
 
@@ -237,8 +238,10 @@ def build_nn(x, keep_prob):
 
     # Layer 5 - Full:(120)=>(43)
     l5 = tf.add(tf.matmul(l4, weights['w5']), biases['b5'])
+    logits = l5
 
-    return l5
+    return logits, conv1, conv2
+
 
 # Setup placeholders for features and labels
 x = tf.placeholder(tf.float32, (None, 32, 32, 1))
@@ -248,7 +251,7 @@ keep_prob = tf.placeholder(tf.float32)
 
 # Build neural networks for:
 # modeling
-logits = build_nn(x, keep_prob)
+logits, conv1, conv2 = build_nn(x, keep_prob)
 softmax_op = tf.nn.softmax(logits=logits)
 pred_count = 5
 top5_op = tf.nn.top_k(softmax_op, k=pred_count)
@@ -266,7 +269,8 @@ loss_op = tf.reduce_mean(cross_entropy)
 optimizer = tf.train.AdamOptimizer(learning_rate=learn_rate)
 training_op = optimizer.minimize(loss_op)
 # evaluations
-correct_predictions = tf.equal(tf.argmax(logits, 1), tf.argmax(y_onehot, 1))
+predictions_op = tf.argmax(logits, 1)
+correct_predictions = tf.equal(predictions_op, tf.argmax(y_onehot, 1))
 accuracy_op = tf.reduce_mean(tf.cast(correct_predictions, tf.float32))
 
 
@@ -295,15 +299,17 @@ def evaluate(X_data, y_data):
     num_examples = len(X_data)
     total_accuracy = 0.0
     sess = tf.get_default_session()
+    total_predictions = []
     for offset in range(0, num_examples, BATCH_SIZE):
         index_end = offset + BATCH_SIZE
         batch_x, batch_y = X_data[offset:index_end], y_data[offset:index_end]
-        accuracy, top5_pred = sess.run([accuracy_op, top5_op], \
-                feed_dict={x: batch_x, y: batch_y, keep_prob: 1.0})
+        accuracy, top5_pred, predictions = sess.run([accuracy_op, top5_op, predictions_op], \
+                                       feed_dict={x: batch_x, y: batch_y, keep_prob: 1.0})
         total_accuracy += (accuracy * len(batch_x))
-    return (total_accuracy / num_examples, top5_pred)
+        total_predictions.extend(predictions)
+    return (total_accuracy / num_examples, top5_pred, total_predictions)
 
-# Train the neural networks
+#%% Train the neural networks
 train_data_file = './train_data/trafficsign_train_003'
 saver = tf.train.Saver()
 with tf.Session() as sess:
@@ -317,10 +323,10 @@ with tf.Session() as sess:
         train(X_train_proc, y_train)
 
         # Train the neural networks
-        train_accuracy, _ = evaluate(X_train_proc, y_train)
+        train_accuracy, _, _ = evaluate(X_train_proc, y_train)
 
         # Validate the networks against validation set
-        validation_accuracy, _ = evaluate(X_valid_proc, y_valid)
+        validation_accuracy, _ , _= evaluate(X_valid_proc, y_valid)
 
         print('EPOCH {:<2} - Train Accuracy = {:.2%}, Validation Accuracy = {:.2%}'.format(
             i + 1, train_accuracy, validation_accuracy))
@@ -331,13 +337,47 @@ with tf.Session() as sess:
     saver.save(sess, train_data_file)
 
 
-### Calculate and report the accuracy on the test set
+
+#%% Calculate and report the accuracy, precision, and recall on the test set
+def compute_precision_recall(predictions, actual_values):
+    bc_pred = np.bincount(predictions)
+    bc_actual = np.bincount(actual_values)
+
+    assert (len(bc_pred) == n_classes)
+    assert (len(bc_actual) == n_classes)
+
+    bc_correct = [0] * n_classes
+    for pred, actual in zip(predictions, actual_values):
+        if (pred == actual):
+            bc_correct[pred] += 1
+
+    bc_correct = np.array(bc_correct)
+    precision = bc_correct / bc_pred
+    recall = bc_correct / bc_actual
+    return precision, recall
+
+
 with tf.Session() as sess:
     saver.restore(sess, train_data_file)
 
     # Validate the networks against test set
-    test_accuracy, _ = evaluate(X_test_proc, y_test)
+    test_accuracy, _, predictions = evaluate(X_test_proc, y_test)
     print('Test Accuracy = {:.2%}'.format(test_accuracy))
+
+    # Compute precision and recall
+    predictions = np.array(predictions)
+    precision, recall = compute_precision_recall(predictions, y_test)
+
+    df_precision_recall = pd.DataFrame({
+        'Precision': precision,
+        'Recall': recall
+    }, index=y_bins, columns=['Precision', 'Recall'])
+    plt.figure()
+    df_precision_recall.plot.bar()
+    plt.title('Precision And Recall')
+    plt.xticks(rotation='vertical')
+    plt.savefig('./results/precision_and_recall_test.png')
+
 
 
 

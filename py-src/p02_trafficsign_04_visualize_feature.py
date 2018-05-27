@@ -1,42 +1,3 @@
-#%% Step 0 - Load The Data ###
-print('#%% Step 0 - Load The Data ###')
-
-# Load pickled data
-import pickle
-
-# Specify the data files for training, validation, and testing
-training_file = '../data/train.p'
-validation_file = '../data/valid.p'
-testing_file = '../data/test.p'
-
-with open(training_file, mode='rb') as f:
-    train = pickle.load(f)
-with open(validation_file, mode='rb') as f:
-    valid = pickle.load(f)
-with open(testing_file, mode='rb') as f:
-    test = pickle.load(f)
-
-X_train, y_train = train['features'], train['labels']
-X_valid, y_valid = valid['features'], valid['labels']
-X_test, y_test = test['features'], test['labels']
-
-assert(len(X_train) == len(y_train))
-assert(len(X_valid) == len(y_valid))
-assert(len(X_test) == len(y_test))
-
-
-#%% Step 1-0 - Read signnames.csv
-import csv
-signnames = None
-with open('../signnames.csv') as csvFile:
-    reader = csv.reader(csvFile)
-    # Skip header
-    next(reader)
-    signnames = [r[1] for r in reader]
-
-
-### Step 2 - Design and Test a Model Architecture
-
 #%% Step 2-1 - Preprocess
 print('#%% Step 2-1 - Preprocess ###')
 
@@ -55,9 +16,6 @@ def preprocess(data):
     # Normalization ([0, 255] => [-1, 1))
     data_proc = (data_proc - 128.0) / 128.0
     return data_proc
-
-X_valid_proc = preprocess(X_valid)
-X_test_proc = preprocess(X_test)
 
 
 #%% Step 2-2 - Model Architecture
@@ -195,87 +153,66 @@ for image_name in image_files:
 y_new = np.array(y_new)
 X_new_proc = preprocess(X_new)
 
-# Display new images
-img_row = 3
-img_col = 3
-plt.figure(figsize=(10, 10))
-for i in range(new_img_count):
-    plt.subplot(img_row, img_col, i + 1)
-    img_label = y_new[i]
-    plt.title('{} - {:.15}'.format(image_files[i], signnames[img_label]))
-    plt.imshow(new_images[i])
-plt.savefig('../results/new_images.png')
-plt.show()
-
-plt.figure().suptitle('New Traffic Sign Images - Resized to 32x32')
-for i in range(new_img_count):
-    plt.subplot(img_row, img_col, i + 1)
-    img_label = y_new[i]
-    plt.title('{} - {}'.format(img_label, signnames[img_label]))
-    plt.imshow(X_new[i])
-plt.show()
-
-plt.figure().suptitle('New Traffic Sign Images - Preprocessed')
-for i in range(new_img_count):
-    plt.subplot(img_row, img_col, i + 1)
-    img_label = y_new[i]
-    plt.title('{} - {}'.format(img_label, signnames[img_label]))
-    plt.imshow(X_new_proc[i].squeeze(), cmap='gray')
-plt.show()
 
 
-#%% Evaluate new images
-train_data_file = './train_data/trafficsign_train_001'
+#%% Step 4 - Visualize the Neural Network's State with Test Images
+
+### Visualize your network's feature maps here.
+### Feel free to use as many code cells as needed.
+
+# image_input: the test image being fed into the network to produce the feature maps
+# tf_activation: should be a tf variable name used during your training procedure that represents the calculated state of a specific weight layer
+# sess: tensor flow session
+# activation_min/max: can be used to view the activation contrast in more detail, by default matplot sets min and max to the actual min and max values of the output
+# plt_num: used to plot out multiple different weight feature map sets on the same block, just extend the plt number for each new feature map entry
+
+def outputFeatureMap(image_input, tf_activation, sess, activation_min=-1, activation_max=-1 ,plt_num=1):
+    # Here make sure to preprocess your image_input in a way your network expects
+    # with size, normalization, ect if needed
+    # image_input =
+    # Note: x should be the same name as your network's tensorflow data placeholder variable
+    # If you get an error tf_activation is not defined it may be having trouble accessing the variable from inside a function
+    activation = tf_activation.eval(session=sess,feed_dict={x : image_input})
+    featuremaps = activation.shape[3]
+    plt.figure(plt_num, figsize=(15,10))
+    for featuremap in range(featuremaps):
+        plt.subplot(4,8, featuremap+1) # sets the number of feature maps to show on each row and column
+        plt.title('FeatureMap ' + str(featuremap)) # displays the feature map number
+        if activation_min != -1 & activation_max != -1:
+            plt.imshow(activation[0,:,:, featuremap], interpolation="nearest", vmin =activation_min, vmax=activation_max, cmap="gray")
+        elif activation_max != -1:
+            plt.imshow(activation[0,:,:, featuremap], interpolation="nearest", vmax=activation_max, cmap="gray")
+        elif activation_min !=-1:
+            plt.imshow(activation[0,:,:, featuremap], interpolation="nearest", vmin=activation_min, cmap="gray")
+        else:
+            plt.imshow(activation[0,:,:, featuremap], interpolation="nearest", cmap="gray")
+
+    plt.tight_layout()
+    plt.show()
+
+
+
+
+#%% Visualize Convolution Layer Feature Maps
+train_data_file = '../train_data/trafficsign_train_001'
 saver = tf.train.Saver()
+
+# Visualize Convolution Layer Feature Maps - Right-of-way at the next intersection
+ii = image_files.index('11.1.jpg')
+plt.imshow(X_new_proc[ii].squeeze(), cmap="gray")
+plt.show()
 with tf.Session() as sess:
     saver.restore(sess, train_data_file)
+    outputFeatureMap(X_new_proc[ii : ii + 1], conv1, sess)
+    outputFeatureMap(X_new_proc[ii : ii + 1], conv2, sess)
 
-    # Validate the networks against validation set
-    new_img_accuracy, top5_pred = evaluate(X_new_proc, y_new)
-
-print('New Image Accuracy = {:.2%}'.format(new_img_accuracy))
-
-
-#%% Display predictions for new images
-plt.figure(figsize=(10, 10))
-
-for i in range(new_img_count):
-    plt.subplot(img_row, img_col, i + 1)
-    img_label = y_new[i]
-    label_pred = top5_pred.indices[i][0]
-    correct = 'CORRECT' if label_pred == img_label else 'WRONG'
-    plt.title('{} - {:.20}\nPrediction: {} ({:.2%}) {}'.format( \
-            image_files[i], signnames[img_label], label_pred, top5_pred.values[i][0], correct))
-    plt.imshow(X_new_proc[i].squeeze(), cmap='gray')
-plt.tight_layout()
+# Visualize Convolution Layer Feature Maps - Roundabout mandatory
+ii = image_files.index('40.1.jpg')
+plt.imshow(X_new_proc[ii].squeeze(), cmap="gray")
 plt.show()
+with tf.Session() as sess:
+    saver.restore(sess, train_data_file)
+    outputFeatureMap(X_new_proc[ii : ii + 1], conv1, sess)
+    outputFeatureMap(X_new_proc[ii : ii + 1], conv2, sess)
 
 
-#%% Print prediction summary - top 5 softmax probabilities
-
-for i in range(new_img_count):
-    img_label = y_new[i]
-    signname = signnames[img_label]
-    predictions = list(map(lambda x: '{}-{:.20} ({:.2%})'.format(x[0], signnames[x[0]], x[1]), \
-        list(zip(top5_pred.indices[i], top5_pred.values[i]))))
-    # print([i for i in predictions])
-    print(predictions)
-
-
-#%% Display prediction summary - top 5 softmax probabilities
-import pandas as pd
-
-labels_new = np.array([[i] * pred_count for i in y_new]).flatten()
-predictions_new = top5_pred.indices.flatten()
-index_tuple = list(zip(
-    np.array([[i] * pred_count for i in image_files]).flatten(),
-    ['{:.10}'.format(signnames[i]) for i in labels_new],
-    list(range(1, pred_count + 1)) * new_img_count))
-pd_index = pd.MultiIndex.from_tuples(index_tuple, names=['FileName', 'Label', 'Rank'])
-df = pd.DataFrame({
-        'Prediction': ['{:.10} ({})'.format(signnames[i], i) for i in predictions_new],
-        'Confidence': ['{:.2%}'.format(i) for i in top5_pred.values.flatten()],
-        'Correct': np.equal(labels_new, predictions_new)
-    },
-    index=pd_index)
-print(df[['Prediction', 'Confidence', 'Correct']])
