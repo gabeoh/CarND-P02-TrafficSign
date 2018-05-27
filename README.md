@@ -13,7 +13,7 @@ neural network behaviors.
 ## File Structure
 ### Project Requirements
 - **[Traffic_Sign_Classifier.ipynb](Traffic_Sign_Classifier.ipynb)** - Project IPython notebook
-- **??** - HTML output of the Ipython notebook
+- **[Traffic_Sign_Classifier.html](Traffic_Sign_Classifier.html)** - HTML output of the Ipython notebook
 - **[P02_writeup.md](P02_writeup.md)** - Project write-up report
 
 ### Additional Files
