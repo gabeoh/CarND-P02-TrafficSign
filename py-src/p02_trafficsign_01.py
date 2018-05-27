@@ -356,7 +356,6 @@ def compute_precision_recall(predictions, actual_values):
     recall = bc_correct / bc_actual
     return precision, recall
 
-
 with tf.Session() as sess:
     saver.restore(sess, train_data_file)
 
@@ -376,7 +375,7 @@ with tf.Session() as sess:
     df_precision_recall.plot.bar()
     plt.title('Precision And Recall')
     plt.xticks(rotation='vertical')
-    plt.savefig('./results/precision_and_recall_test.png')
+    # plt.savefig('../results/precision_and_recall_test.png')
 
 
 
