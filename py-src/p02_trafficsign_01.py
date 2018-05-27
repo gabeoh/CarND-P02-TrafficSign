@@ -125,7 +125,28 @@ for i in range(display_count):
     img_label = y_train[img_index]
     plt.title('#{} - {}:{:.15}'.format(img_index, img_label, signnames[img_label]))
     plt.imshow(X_train[img_index])
+plt.show()
 
+
+#%% Demonstrate preprocessing steps
+i = 12315
+img_label = y_train[i]
+plt.subplot(2, 2, 1)
+plt.title('#{} - {}:{:.15} (Original)'.format(i, img_label, signnames[img_label]))
+plt.imshow(X_train[i])
+
+import cv2
+i_gray = cv2.cvtColor(X_train[i], cv2.COLOR_RGB2GRAY)
+plt.subplot(2, 2, 2)
+plt.title('#{} - {}:{:.15} (Grayscale)'.format(i, img_label, signnames[img_label]))
+plt.imshow(i_gray, cmap='gray')
+
+i_norm = (i_gray - 128.0) / 128.0
+plt.subplot(2, 2, 3)
+plt.title('#{} - {}:{:.15} (Normalized)'.format(i, img_label, signnames[img_label]))
+plt.imshow(i_norm, cmap='gray')
+plt.tight_layout()
+plt.savefig('../results/preprocessing.png')
 plt.show()
 
 
@@ -193,28 +214,28 @@ def build_nn(x, keep_prob):
     pool_kernel = [1, 2, 2, 1]
     pool_stride = [1, 2, 2, 1]
 
-    # Layer 1 - Conv:(32, 32, 1)=>(28, 28, 6) -- ReLU -- MaxPool:=>(14, 14, 6)
+    # Layer 1 - Conv:(32, 32, 1)=>(28, 28, 12) -- ReLU -- MaxPool:=>(14, 14, 12)
     l1 = tf.nn.conv2d(x, weights['w1'], conv_stride, padding) + biases['b1']
     l1 = tf.nn.relu(l1)
     l1 = tf.nn.max_pool(l1, pool_kernel, pool_stride, padding)
 
-    # Layer 2 - Conv:(14, 14, 6)=>(10, 10, 16) -- ReLU -- MaxPool:=>(5, 5, 16) -- Flat:=>(400)
+    # Layer 2 - Conv:(14, 14, 12)=>(10, 10, 32) -- ReLU -- MaxPool:=>(5, 5, 32) -- Flat:=>(800)
     l2 = tf.nn.conv2d(l1, weights['w2'], conv_stride, padding) + biases['b2']
     l2 = tf.nn.relu(l2)
     l2 = tf.nn.max_pool(l2, pool_kernel, pool_stride, padding)
     l2 = tf.contrib.layers.flatten(l2)
 
-    # Layer 3 - Full:(400)=>(120) -- ReLU
+    # Layer 3 - Full:(800)=>(240) -- ReLU
     l3 = tf.add(tf.matmul(l2, weights['w3']), biases['b3'])
     l3 = tf.nn.relu(l3)
     l3 = tf.nn.dropout(l3, keep_prob=keep_prob)
 
-    # Layer 4 - Full:(120)=>(84) -- ReLU
+    # Layer 4 - Full:(240)=>(120) -- ReLU
     l4 = tf.add(tf.matmul(l3, weights['w4']), biases['b4'])
     l4 = tf.nn.relu(l4)
     l4 = tf.nn.dropout(l4, keep_prob=keep_prob)
 
-    # Layer 5 - Full:(84)=>(43)
+    # Layer 5 - Full:(120)=>(43)
     l5 = tf.add(tf.matmul(l4, weights['w5']), biases['b5'])
 
     return l5
