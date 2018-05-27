@@ -228,7 +228,7 @@ with tf.Session() as sess:
     # Validate the networks against validation set
     new_img_accuracy, top5_pred = evaluate(X_new_proc, y_new)
 
-print('New Image Accuracy = {:.1%}'.format(new_img_accuracy))
+print('New Image Accuracy = {:.2%}'.format(new_img_accuracy))
 
 
 #%% Display predictions for new images
@@ -239,7 +239,7 @@ for i in range(new_img_count):
     img_label = y_new[i]
     label_pred = top5_pred.indices[i][0]
     correct = 'CORRECT' if label_pred == img_label else 'WRONG'
-    plt.title('{} - {:.20}\nPrediction: {} ({:.1%}) {}'.format( \
+    plt.title('{} - {:.20}\nPrediction: {} ({:.2%}) {}'.format( \
             image_files[i], signnames[img_label], label_pred, top5_pred.values[i][0], correct))
     plt.imshow(X_new_proc[i].squeeze(), cmap='gray')
 plt.tight_layout()
@@ -251,7 +251,7 @@ plt.show()
 for i in range(new_img_count):
     img_label = y_new[i]
     signname = signnames[img_label]
-    predictions = list(map(lambda x: '{}-{:.20} ({:.1%})'.format(x[0], signnames[x[0]], x[1]), \
+    predictions = list(map(lambda x: '{}-{:.20} ({:.2%})'.format(x[0], signnames[x[0]], x[1]), \
         list(zip(top5_pred.indices[i], top5_pred.values[i]))))
     # print([i for i in predictions])
     print(predictions)
@@ -269,7 +269,7 @@ index_tuple = list(zip(
 pd_index = pd.MultiIndex.from_tuples(index_tuple, names=['FileName', 'Label', 'Rank'])
 df = pd.DataFrame({
         'Prediction': ['{:.10} ({})'.format(signnames[i], i) for i in predictions_new],
-        'Confidence': ['{:.1%}'.format(i) for i in top5_pred.values.flatten()],
+        'Confidence': ['{:.2%}'.format(i) for i in top5_pred.values.flatten()],
         'Correct': np.equal(labels_new, predictions_new)
     },
     index=pd_index)

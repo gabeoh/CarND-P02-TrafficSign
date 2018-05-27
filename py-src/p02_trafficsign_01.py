@@ -254,7 +254,7 @@ pred_count = 5
 top5_op = tf.nn.top_k(softmax_op, k=pred_count)
 # training
 learn_rate = 0.001
-cross_entropy = tf.nn.softmax_cross_entropy_with_logits_v2(labels=y_onehot, logits=logits)
+cross_entropy = tf.nn.softmax_cross_entropy_with_logits(labels=y_onehot, logits=logits)
 loss_op = tf.reduce_mean(cross_entropy)
 
 # Apply L2 regularization
@@ -310,7 +310,7 @@ with tf.Session() as sess:
     sess.run(tf.global_variables_initializer())
 
     start_time = time.perf_counter()
-    print('Start the neural network training (at {})'.format(start_time))
+    print('Start the neural network training (at {:.3f})'.format(start_time))
     for i in range(EPOCHS):
         # Train the neural networks
         X_train_proc, y_train= shuffle(X_train_proc, y_train)
@@ -322,12 +322,12 @@ with tf.Session() as sess:
         # Validate the networks against validation set
         validation_accuracy, _ = evaluate(X_valid_proc, y_valid)
 
-        print('EPOCH {:<2} - Train Accuracy = {:.3f}, Validation Accuracy = {:.3f}'.format(
+        print('EPOCH {:<2} - Train Accuracy = {:.2%}, Validation Accuracy = {:.2%}'.format(
             i + 1, train_accuracy, validation_accuracy))
         # print('{}\t{}\t{}'.format(i+1, train_accuracy, validation_accuracy))
 
     end_time = time.perf_counter()
-    print('Completed the neural network training in {:.3f}s (at {})'.format(end_time - start_time, end_time))
+    print('Completed the neural network training in {:.3f}s (at {:.3f})'.format(end_time - start_time, end_time))
     saver.save(sess, train_data_file)
 
 
@@ -337,7 +337,7 @@ with tf.Session() as sess:
 
     # Validate the networks against test set
     test_accuracy, _ = evaluate(X_test_proc, y_test)
-    print('Test Accuracy = {:.3f}'.format(test_accuracy))
+    print('Test Accuracy = {:.2%}'.format(test_accuracy))
 
 
 
