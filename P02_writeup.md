@@ -2,43 +2,43 @@
 
 ## Objective
 The objective of this projects are to:
-* Analyze and visualize the provided German traffic sign data set
+* Analyze and visualize the provided German traffic sign dataset
 * Design, train, and test a neural network model to classify the traffic
 sign images 
 * Use the model to predict traffic sign classes on new images
 * Analyze the softmax probabilities of the new images
+* Visualize convolution layer output feature maps
 
 
 [//]: # (Image References)
 
-[image1]: ./examples/visualization.jpg "Visualization"
-[image2]: ./examples/grayscale.jpg "Grayscaling"
-[image3]: ./examples/random_noise.jpg "Random Noise"
-[image4]: ./examples/placeholder.png "Traffic Sign 1"
-[image5]: ./examples/placeholder.png "Traffic Sign 2"
-[image6]: ./examples/placeholder.png "Traffic Sign 3"
-[image7]: ./examples/placeholder.png "Traffic Sign 4"
-[image8]: ./examples/placeholder.png "Traffic Sign 5"
 [image01]: ./results/count_by_dataset.png "Image Count By Dataset"
 [image02]: ./results/count_by_traffic_sign.png "Traffic Sign Occurrence"
 [image03]: ./results/preprocessing.png "Preprocessing"
 [new_images]: ./results/new_images.png "New Images (Original)"
- 
+[precision_recall]: ./results/precision_and_recall_test.png "Precision And Recall"
+[optional_01]: ./results/visualize_11.png
+[optional_02]: ./results/visualize_11_conv1.png
+[optional_03]: ./results/visualize_11_conv2.png
+[optional_04]: ./results/visualize_40.png
+[optional_05]: ./results/visualize_40_conv1.png
+[optional_06]: ./results/visualize_40_conv2.png
 
+ 
 ---
 
 ## Dataset Exploration
 
 ### 1. Basic Dataset Summary
 
-I used the numpylibrary to calculate summary statistics of the traffic
-signs data set:
+I used the numpy library to calculate summary statistics of the traffic
+signs dataset:
 
 * The size of training set is **34,799**
 * The size of the validation set is **4,410** 
 * The size of test set is **12,630**
 * The shape of a traffic sign image is **(32, 32)**
-* The number of unique classes/labels in the data set is **43**
+* The number of unique classes/labels in the dataset is **43**
 
 ### 2. Visualize Dataset Summary
 ![Count_By_Dataset][image01]
@@ -56,16 +56,16 @@ First, the traffic sign datasets are converted to grayscale using `cv2.cvtColor(
 function.  Then, each pixel value is normalized to `[-1, 1)` using
 `(pixel - 128.0) / 128.0` equation.
 
-While the original color images can be used by increasing the color channel
-dimension to 3, I decided to convert the images into the grayscale.  In
-identifying traffic sign classes, the color does not play crucial role.
-By reducing the color channel, the complexity of the neural networks is
-reduced without losing the prediction accuracy.
+While the original color images can directly be used by increasing the
+color channel dimension to 3, I decided to convert the images into the
+grayscale.  In identifying traffic sign classes, the color does not play
+crucial role. By reducing the color channel, the complexity of the neural
+networks is reduced without losing the prediction accuracy.
 
 The weights and biases of the neural networks are initialized with a normal
 distribution of 0 mean and 0.1 standard deviation.  For this initial condition,
 the datasets resembling standard normal distribution (0 mean 1 standard
-deviation) works more efficiently during model training. 
+deviation) works more efficiently for model training. 
 
 The plot below demonstrates the traffic sign images at each preprocessing step.
 As one can see, the normalization does not change the visual representation
@@ -111,9 +111,9 @@ testing* - dropout keep_rate is 1.0 for both testing and validation
 | Dropout keep_prob     | 0.4               |
 | Optimizer             | AdamOptimizer     |
 
-Adam (Adaptive Momentum Estimation) optimizer is used in order to train
-the model. Adam maintains per-parameter learning rates and adapts learning
-rates based on momentum.
+Adam (Adaptive Momentum Estimation) optimizer is used to train the model.
+Adam maintains per-parameter learning rates and adapts learning rates
+based on momentum.
 
 Adam typically requires less hyper-parameter tuning and it achieves good
 results fast.  This makes Adam a good choice of the optimizers.
@@ -126,9 +126,9 @@ between training and validation accuracies while converging efficiently.
 ### 4. Approach to Solution
 
 My final model results were:
-* training set accuracy of 99.78%
-* validation set accuracy of 97.05%
-* test set accuracy of 94.84%
+* training set accuracy of 99.84%
+* validation set accuracy of 95.85%
+* test set accuracy of 95.05%
 
 My model is first based on the LeNet digit classifier by modifying its output
 class dimension.  The LeNet architecture was chosen for the base model
@@ -143,15 +143,15 @@ almost 10%.
 In order to address the overfitting problem, the dropout layer is introduced
 after the ReLU layer of the two hidden fully connected layer.  The dropout
 layer reduced the gap between the training and validation accuracies.
-However, it slowed down the model training and the number of epochs is
-increased to compensate the slow down.  
+However, it slowed down the model conversion and the number of epochs is
+increased to compensate the slowdown.  
 
 In order to achieve further accuracy improvement, the sizes of hidden layer
 outputs are increased.
 
 Comparing to that the digit has 10 types, there are 43 distinct traffic
-signs in the provided dataset.  Therefore, I decided to increase the size
-of hidden output layer.  This increment resulted in some accuracy
+signs in the provided dataset.  Therefore, I decided to increase the sizes
+of hidden output layers.  This increment resulted in some accuracy
 enhancement.
 
 The accuracy calculations and results of the training and validation
@@ -190,8 +190,6 @@ background noises, rotations, and reflections.
 | 22.2.png   | 22 - Bumpy road             | Cropped to center           |
 | 25.2.png   | 25 - Road work              | Cropped to center           |
 
-The five sign images contain some features that challenges
-
 
 ### 2. Predictions on New Image Set
 
@@ -199,7 +197,7 @@ The five sign images contain some features that challenges
 |:----------:|:----------------------:|:-----------------------:|
 | 11.1.jpg   | Right-of-way at the ...| Right-of-way at the ... |
 | 13.1.jpg   | Yield                  | Yield                   |
-| 22.1.jpg   | Bumpy road             | **Speed limit (20km/h)**|
+| 22.1.jpg   | Bumpy road             | **Yield**               |
 | 25.1.jpg   | Road work              | Road work               |
 | 40.1.jpg   | Roundabout mandatory   | Roundabout mandatory    |
 | 13.2.png   | Yield                  | Yield                   |
@@ -207,7 +205,7 @@ The five sign images contain some features that challenges
 | 25.2.png   | Road work              | Road work               |
 
 For 5 original images, the model correctly predicted 4 of them.  This is
-80% accuracy and it's worse than test set accuracy of 94.84%.  But, five
+80% accuracy and it's worse than test set accuracy of 95.05%.  But, five
 new image samples are small and it's hard to draw conclusive analysis
 based on this.
 
@@ -227,10 +225,49 @@ preparations.
 The total new image accuracy is 87.50% considering both the original and
 processed images.
 
+#### Precision and Recall
+
+The precision and the recall values are computed from the test dataset.
+All newly selected five traffic signs have relatively high precision and
+recall values.
+
+One _Bumpy road_ sign is identified as _Yield_.  However, the recall of
+the _Bumpy road_ (94.16%) and the precision of the _Yield_ (99.86%) are
+high.  As suggested above, it is likely that the error on _Bumpy road_
+sign prediction is caused by irrelevant details (noise) in the original image.
+
+**Precision & Recall from Test Set for Five New Images**
+
+| Sign Class                  | Precision   | Recall    |
+|:---------------------------:|:-----------:|:---------:| 
+| 11 - Right-of-way at the ...| 89.25%      | 90.95%    |
+| 13 - Yield                  | 99.86%      | 99.58%    |
+| 22 - Bumpy road             | 95.76%      | 94.16%    |
+| 25 - Road work              | 99.77%      | 92.70%    |
+| 40 - Roundabout mandatory   | 94.93%      | 83.33%    |
 
 
-**TODO: _Precision and Recall_**
+Below listed are traffic signs with low precision and recall.  The precision
+value gets as low as 67.16% on the _Beware of ice/snow_ sign,
+and the recall gets 50% recall on the _Pedestrians_ sign.
 
+The graph in the earlier section for traffic sign occurrence in training set
+shows that all of these five low fidelity traffic signs have a small number
+of training samples.  I believe that adding more samples on these low
+fidelity signs could improve overall model accuracy. 
+
+**Traffic Signs with Low Precision or Recall**
+
+| Sign Class                        | Precision   | Recall    |
+|:---------------------------------:|:-----------:|:---------:| 
+| 24 - Road narrows on the right    | 93.54%      | 64.44%    |
+| 27 - Pedestrians                  | 81.08%      | 50.00%    |
+| 29 - Bicycles crossing            | 68.99%      | 98.88%    |
+| 30 - Beware of ice/snow           | 67.16%      | 60.00%    |
+| 41 - End of no passing            | 87.23%      | 68.33%    |
+
+
+![precision_recall][precision_recall]
 
 
 ### 3. Prediction Confidence - Softmax Probability
@@ -253,20 +290,20 @@ File Name: **13.1.jpg**
 
 | Prediction             | Confidence  |
 |:----------------------:|:-----------:|
-| Yield                  | 100.00%     |
-| Priority road          | 0.00%       |
-| No vehicles            | 0.00%       |
-| Ahead only             | 0.00%       |
+| Yield                  | 99.33%      |
+| Speed limit (50km/h)   | 0.65%       |
+| Priority road          | 0.01%       |
 | No passing             | 0.00%       |
+| Keep left              | 0.00%       |
 
 File Name: **13.2.png**
 
 | Prediction             | Confidence  |
 |:----------------------:|:-----------:|
 | Yield                  | 100.00%     |
-| Priority road          | 0.00%       |
 | Ahead only             | 0.00%       |
-| Keep left              | 0.00%       |
+| Priority road          | 0.00%       |
+| Keep right             | 0.00%       |
 | Road work              | 0.00%       |
 
 #### Bumpy road
@@ -275,21 +312,21 @@ File Name: **22.1.jpg** - _Incorrect Prediction_
 
 | Prediction             | Confidence  |
 |:----------------------:|:-----------:|
-| Speed limit (30km/h)   | 93.59%      |
-| Turn left ahead        | 2.49%       |
-| Speed limit (20km/h)   | 2.03%       |
-| Turn right ahead       | 1.70%       |
-| General caution        | 0.08%       |
+| Yield                  | 67.58%      |
+| Priority road          | 16.93%      |
+| Speed limit (30km/h)   | 15.28%      |
+| Speed limit (50km/h)   | 0.11%       |
+| Stop                   | 0.05%       |
 
 File Name: **22.2png**
 
 | Prediction                | Confidence  |
 |:-------------------------:|:-----------:|
-| Bumpy road                | 99.76%      |
-| Bicycles crossing         | 0.15%       |
-| Road work                 | 0.10%       |
-| Road narrows on the right | 0.00%       |
+| Bumpy road                | 99.99%      |
+| Bicycles crossing         | 0.01%       |
 | Beware of ice/snow        | 0.00%       |
+| Traffic signals           | 0.00%       |
+| Keep right                | 0.00%       |
 
 #### Road work
 
@@ -297,20 +334,20 @@ File Name: **25.1.jpg**
 
 | Prediction             | Confidence  |
 |:----------------------:|:-----------:|
-| Road work              | 99.99%      |
-| Bumpy road             | 0.01%       |
-| Bicycles crossing      | 0.00%       |
-| Beware of ice/snow     | 0.00%       |
-| Yield                  | 0.00%       |
+| Road work              | 47.97%      |
+| Double curve           | 39.78%      |
+| Wild animals crossing  | 7.61%       |
+| Keep left              | 2.35%       |
+| Bicycles crossing      | 0.72%       |
 
 File Name: **25.2.png**
 
 | Prediction                    | Confidence  |
 |:-----------------------------:|:-----------:|
 | Road work                     | 100.00%     |
-| Dangerous curve to the right  | 0.00%       |
-| Yield                         | 0.00%       |
-| Bumpy road                    | 0.00%       |
+| Priority road                 | 0.00%       |
+| Bicycles crossing             | 0.00%       |
+| Keep right                    | 0.00%       |
 | Beware of ice/snow            | 0.00%       |
 
 #### Roundabout mandatory
@@ -319,14 +356,53 @@ File Name: **40.1.jpg**
 
 | Prediction             | Confidence  |
 |:----------------------:|:-----------:|
-| Roundabout mandatory   | 99.83%      |
-| Speed limit (100km/h)  | 0.17%       |
+| Roundabout mandatory   | 100.00%     |
 | Priority road          | 0.00%       |
+| Speed limit (100km/h)  | 0.00%       |
+| No entry               | 0.00%       |
 | Speed limit (120km/h)  | 0.00%       |
-| Speed limit (80km/h)   | 0.00%       |
 
 
-### (Optional) Visualizing the Neural Network (See Step 4 of the Ipython notebook for more details)
-#### 1. Discuss the visual output of your trained network's feature maps. What characteristics did the neural network use to make classifications?
+## Visualize Neural Network's State
 
+### 1. Visualize Convolution Layer Output Feature Map
+
+Two images, _Right-of-way at the next intersection_ and _Roundabout mandatory_,
+are used to visualize the feature map of two convolution layers.
+
+The first layer output still resembles the overall shape of the input image.
+The resemblance gets more abstracted out in the second layer output.  Both
+layer feature maps roughly identify regions relevant to the traffic sign.
+In addition, each feature map seems to get activated by different features
+of the input image such as parts of sign boundaries, regions of the sign
+symbols etc. 
+
+#### Right-of-way at the next intersection
+
+**Grayscale Image**
+
+![optional_01][optional_01]
+
+**Convolution Layer 1**
+
+![optional_02][optional_02]
+
+**Convolution Layer 2**
+
+![optional_03][optional_03]
+
+
+#### Roundabout mandatory
+
+**Grayscale Image**
+
+![optional_04][optional_04]
+
+**Convolution Layer 1**
+
+![optional_05][optional_05]
+
+**Convolution Layer 2**
+
+![optional_06][optional_06]
 
