@@ -166,7 +166,7 @@ X_new_proc = preprocess(X_new)
 # activation_min/max: can be used to view the activation contrast in more detail, by default matplot sets min and max to the actual min and max values of the output
 # plt_num: used to plot out multiple different weight feature map sets on the same block, just extend the plt number for each new feature map entry
 
-def outputFeatureMap(image_input, tf_activation, sess, activation_min=-1, activation_max=-1 ,plt_num=1):
+def outputFeatureMap(image_input, tf_activation, sess, file=None, activation_min=-1, activation_max=-1 ,plt_num=1):
     # Here make sure to preprocess your image_input in a way your network expects
     # with size, normalization, ect if needed
     # image_input =
@@ -188,6 +188,8 @@ def outputFeatureMap(image_input, tf_activation, sess, activation_min=-1, activa
             plt.imshow(activation[0,:,:, featuremap], interpolation="nearest", cmap="gray")
 
     plt.tight_layout()
+    if (file):
+        plt.savefig(file)
     plt.show()
 
 
@@ -200,19 +202,21 @@ saver = tf.train.Saver()
 # Visualize Convolution Layer Feature Maps - Right-of-way at the next intersection
 ii = image_files.index('11.1.jpg')
 plt.imshow(X_new_proc[ii].squeeze(), cmap="gray")
+plt.savefig('../results/visualize_11.png')
 plt.show()
 with tf.Session() as sess:
     saver.restore(sess, train_data_file)
-    outputFeatureMap(X_new_proc[ii : ii + 1], conv1, sess)
-    outputFeatureMap(X_new_proc[ii : ii + 1], conv2, sess)
+    outputFeatureMap(X_new_proc[ii : ii + 1], conv1, sess, file='../results/visualize_11_conv1.png')
+    outputFeatureMap(X_new_proc[ii : ii + 1], conv2, sess, file='../results/visualize_11_conv2.png')
 
 # Visualize Convolution Layer Feature Maps - Roundabout mandatory
 ii = image_files.index('40.1.jpg')
 plt.imshow(X_new_proc[ii].squeeze(), cmap="gray")
+plt.savefig('../results/visualize_40.png')
 plt.show()
 with tf.Session() as sess:
     saver.restore(sess, train_data_file)
-    outputFeatureMap(X_new_proc[ii : ii + 1], conv1, sess)
-    outputFeatureMap(X_new_proc[ii : ii + 1], conv2, sess)
+    outputFeatureMap(X_new_proc[ii : ii + 1], conv1, sess, file='../results/visualize_40_conv1.png')
+    outputFeatureMap(X_new_proc[ii : ii + 1], conv2, sess, file='../results/visualize_40_conv2.png')
 
 
